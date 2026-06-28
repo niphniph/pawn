@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useMemo, useRef } from 'react';
-import { View, StyleSheet, Text, SafeAreaView } from 'react-native';
+import React, { useState, useEffect, useRef } from 'react';
+import { View, StyleSheet, SafeAreaView } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 
 import { getValidMoves, checkPlayerWin, checkComputerWin } from '../src/logic/movement';
@@ -136,7 +136,6 @@ export default function GameScreen() {
   };
 
   const handleUndo = () => {
-    // Only allow undo if it's the player's turn to act
     if (undoHistory.length === 0 || gameState !== 'playing' || activeTurn !== 'player') return;
     const prevHistory = [...undoHistory];
     const lastState = prevHistory.pop()!;
@@ -267,15 +266,9 @@ export default function GameScreen() {
   };
 
   return (
-    <LinearGradient colors={['#090416', '#160b2b']} style={styles.background}>
+    <LinearGradient colors={['#250f4a', '#0c021f']} style={styles.background}>
       <SafeAreaView style={styles.container}>
-        {/* Header Title */}
-        <View style={styles.header}>
-          <Text style={styles.title}>PAWN GAMBIT</Text>
-          <Text style={styles.subtitle}>NEON GRID DUEL</Text>
-        </View>
-
-        {/* HUD Stats */}
+        {/* Sleek top HUD */}
         <HUD
           moves={gameMoves}
           timeLeft={timeLeft}
@@ -288,7 +281,7 @@ export default function GameScreen() {
           activeTurn={activeTurn}
         />
 
-        {/* Main Board */}
+        {/* Maximized Game Board */}
         <View style={styles.boardWrapper}>
           <GameBoard
             walls={walls}
@@ -300,7 +293,7 @@ export default function GameScreen() {
           />
         </View>
 
-        {/* Game State Overlay Modal */}
+        {/* Overlays */}
         <GameModal
           visible={gameState !== 'playing'}
           status={gameState === 'playing' ? 'gameover' : gameState}
@@ -322,38 +315,15 @@ const styles = StyleSheet.create({
   },
   container: {
     flex: 1,
-    paddingHorizontal: 16,
+    paddingHorizontal: 10,
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingBottom: 24,
-  },
-  header: {
-    alignItems: 'center',
-    marginVertical: 12,
-  },
-  title: {
-    color: '#00ccff',
-    fontSize: 22,
-    fontWeight: '900',
-    letterSpacing: 2.5,
-    textShadowColor: 'rgba(0, 204, 255, 0.6)',
-    textShadowOffset: { width: 0, height: 0 },
-    textShadowRadius: 8,
-  },
-  subtitle: {
-    color: '#ff00cc',
-    fontSize: 10,
-    fontWeight: '800',
-    letterSpacing: 1.5,
-    marginTop: 2,
-    textShadowColor: 'rgba(255, 0, 204, 0.4)',
-    textShadowOffset: { width: 0, height: 0 },
-    textShadowRadius: 6,
+    paddingBottom: 16,
   },
   boardWrapper: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    marginVertical: 10,
+    width: '100%',
   },
 });

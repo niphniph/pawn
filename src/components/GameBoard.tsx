@@ -24,19 +24,27 @@ export const GameBoard: React.FC<GameBoardProps> = ({
 }) => {
   const gridSize = 9;
 
-  // Screen size dynamic math to scale perfectly on all mobile phones
+  // Dynamic layout calculations
   const screenWidth = Dimensions.get('window').width;
-  const boardPadding = 12;
-  const maxBoardSize = 370;
-  const boardSize = Math.min(screenWidth - 32, maxBoardSize);
-  const cellSize = (boardSize - boardPadding * 2) / gridSize;
+  const screenHeight = Dimensions.get('window').height;
+  
+  // Maximize board size to fill the screen width on mobile
+  const maxBoardSize = 390;
+  const boardSize = Math.min(screenWidth - 20, maxBoardSize);
 
-  // Animation values
+  // Math to extract cell sizes:
+  // boardOuter has borderWidth: 10, padding: 6.
+  // boardInner has borderWidth: 2, padding: 4.
+  // Total border + padding reduction = (10*2 + 6*2) + (2*2 + 4*2) = 32 + 12 = 44
+  const innerUsableSize = boardSize - 44;
+  const cellSize = innerUsableSize / gridSize;
+
+  // Animations
   const shakeAnim = useRef(new Animated.Value(0)).current;
   const pinkPosAnim = useRef(new Animated.ValueXY({ x: 4 * cellSize, y: 8 * cellSize })).current;
   const cyanPosAnim = useRef(new Animated.ValueXY({ x: 4 * cellSize, y: 0 * cellSize })).current;
 
-  // Sync pink computer ball position with spring animation
+  // Sync pink computer ball position
   useEffect(() => {
     Animated.spring(pinkPosAnim, {
       toValue: { x: ballPositions.pink.x * cellSize, y: ballPositions.pink.y * cellSize },
@@ -46,7 +54,7 @@ export const GameBoard: React.FC<GameBoardProps> = ({
     }).start();
   }, [ballPositions.pink.x, ballPositions.pink.y, cellSize]);
 
-  // Sync cyan player ball position with spring animation
+  // Sync cyan player ball position
   useEffect(() => {
     Animated.spring(cyanPosAnim, {
       toValue: { x: ballPositions.cyan.x * cellSize, y: ballPositions.cyan.y * cellSize },
@@ -56,7 +64,7 @@ export const GameBoard: React.FC<GameBoardProps> = ({
     }).start();
   }, [ballPositions.cyan.x, ballPositions.cyan.y, cellSize]);
 
-  // Trigger shake animation for invalid moves
+  // Invalid move shake animation
   useEffect(() => {
     if (shakeTrigger > 0) {
       Animated.sequence([
@@ -69,7 +77,7 @@ export const GameBoard: React.FC<GameBoardProps> = ({
     }
   }, [shakeTrigger]);
 
-  // Swipe Gesture detection
+  // Touch Swipe coordinates tracking
   const touchStartRef = useRef<{ x: number; y: number } | null>(null);
 
   const handleTouchStart = (e: any) => {
@@ -84,19 +92,16 @@ export const GameBoard: React.FC<GameBoardProps> = ({
     const dy = touch.pageY - touchStartRef.current.y;
     touchStartRef.current = null;
 
-    const threshold = 35; // Swiping threshold distance in pixels
+    const threshold = 35;
     if (Math.abs(dx) > threshold || Math.abs(dy) > threshold) {
       if (Math.abs(dx) > Math.abs(dy)) {
-        // Horizontal Swiping
         onMove(dx > 0 ? 'right' : 'left');
       } else {
-        // Vertical Swiping
         onMove(dy > 0 ? 'down' : 'up');
       }
     }
   };
 
-  // Generate 9x9 cells
   const cells = Array.from({ length: gridSize * gridSize }, (_, i) => ({
     x: i % gridSize,
     y: Math.floor(i / gridSize),
@@ -116,7 +121,7 @@ export const GameBoard: React.FC<GameBoardProps> = ({
       ]}
     >
       <View style={styles.boardInner}>
-        {/* Cells Grid */}
+        {/* Grid Cells */}
         <View style={styles.grid}>
           {cells.map((cell) => {
             const isPinkCell = ballPositions.pink.x === cell.x && ballPositions.pink.y === cell.y;
@@ -136,7 +141,7 @@ export const GameBoard: React.FC<GameBoardProps> = ({
           })}
         </View>
 
-        {/* Walls Overlay */}
+        {/* Walls */}
         {walls.map((wall, idx) => {
           const isHorizontal = wall.to.y !== wall.from.y;
           const dir = isHorizontal ? 'h' : 'v';
@@ -174,14 +179,14 @@ export const GameBoard: React.FC<GameBoardProps> = ({
 
 const styles = StyleSheet.create({
   boardOuter: {
-    backgroundColor: '#3a1d74',
-    borderWidth: 8,
-    borderColor: '#4d2496',
-    borderRadius: 24,
-    padding: 10,
-    shadowColor: '#1a083a',
+    backgroundColor: '#4d1ab3', // Saturated purple frame
+    borderWidth: 10,
+    borderColor: '#6024db', // Glowing purple border outline
+    borderRadius: 32, // Large rounded outer corners
+    padding: 6,
+    shadowColor: '#100326',
     shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: 0.6,
+    shadowOpacity: 0.7,
     shadowRadius: 15,
     elevation: 12,
     justifyContent: 'center',
@@ -191,12 +196,13 @@ const styles = StyleSheet.create({
     flex: 1,
     width: '100%',
     height: '100%',
-    backgroundColor: '#0c051a',
-    borderRadius: 12,
-    borderWidth: 1.5,
-    borderColor: '#30185c',
+    backgroundColor: '#0c051a', // Deep dark board background
+    borderRadius: 20, // Rounded inner corners
+    borderWidth: 2,
+    borderColor: '#30145c',
     position: 'relative',
     overflow: 'hidden',
+    padding: 4,
   },
   grid: {
     flex: 1,

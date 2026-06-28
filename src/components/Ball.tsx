@@ -12,21 +12,21 @@ interface BallProps {
 export const Ball: React.FC<BallProps> = ({ color, isSelected, cellSize, positionAnim }) => {
   const scaleAnim = useRef(new Animated.Value(1)).current;
 
-  // Pulse scale animation when it's this ball's turn
+  // Subtle pulsing animation when it is the active turn
   useEffect(() => {
     let pulse: Animated.CompositeAnimation | null = null;
     if (isSelected) {
       pulse = Animated.loop(
         Animated.sequence([
           Animated.timing(scaleAnim, {
-            toValue: 1.12,
-            duration: 500,
+            toValue: 1.05,
+            duration: 600,
             easing: Easing.inOut(Easing.ease),
             useNativeDriver: true,
           }),
           Animated.timing(scaleAnim, {
-            toValue: 0.96,
-            duration: 500,
+            toValue: 0.97,
+            duration: 600,
             easing: Easing.inOut(Easing.ease),
             useNativeDriver: true,
           }),
@@ -47,13 +47,15 @@ export const Ball: React.FC<BallProps> = ({ color, isSelected, cellSize, positio
   }, [isSelected]);
 
   const isPink = color === 'pink';
+  
+  // High-contrast glossy gradient colors matching reference screenshot exactly
   const colors: [string, string, ...string[]] = isPink
-    ? ['#ffaede', '#ff00cc', '#800066']
-    : ['#cceeff', '#00ccff', '#006680'];
-  const glowColor = isPink ? '#ff00cc' : '#00ccff';
+    ? ['#ff73cc', '#ff1a8c', '#800040'] // Vibrant pink marble
+    : ['#66e0ff', '#009dff', '#004c80']; // Vibrant cyan marble
 
-  const padding = cellSize * 0.12;
-  const ballSize = cellSize - padding * 2;
+  // Size proportion: occupies ~82% of the cell
+  const ballSize = cellSize * 0.82;
+  const padding = (cellSize - ballSize) / 2;
 
   return (
     <Animated.View
@@ -75,20 +77,15 @@ export const Ball: React.FC<BallProps> = ({ color, isSelected, cellSize, positio
         style={[
           styles.ballOuter,
           {
+            width: ballSize,
+            height: ballSize,
             borderRadius: ballSize / 2,
-            shadowColor: glowColor,
-            shadowOpacity: isSelected ? 0.9 : 0.5,
-            shadowRadius: isSelected ? 10 : 5,
-            borderWidth: 1.5,
-            borderColor: isSelected ? '#ffffff' : 'rgba(255,255,255,0.25)',
           },
         ]}
       >
         <LinearGradient colors={colors} style={styles.gradient}>
-          {/* Specular Highlight for 3D sphere look */}
+          {/* Circular Glossy Specular Highlight Spot in top-left */}
           <View style={styles.specularHighlight} />
-          {/* Secondary subtle shadow highlight */}
-          <View style={styles.shadowHighlight} />
         </LinearGradient>
       </View>
     </Animated.View>
@@ -103,11 +100,14 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   ballOuter: {
-    width: '100%',
-    height: '100%',
     overflow: 'hidden',
+    shadowColor: '#000000',
     shadowOffset: { width: 0, height: 4 },
-    elevation: 8,
+    shadowOpacity: 0.5,
+    shadowRadius: 4,
+    elevation: 6,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.25)',
   },
   gradient: {
     flex: 1,
@@ -115,22 +115,13 @@ const styles = StyleSheet.create({
   },
   specularHighlight: {
     position: 'absolute',
-    top: '10%',
+    top: '15%',
     left: '15%',
-    width: '32%',
-    height: '22%',
-    backgroundColor: 'rgba(255, 255, 255, 0.85)',
+    width: '26%',
+    height: '26%',
+    backgroundColor: '#ffffff',
     borderRadius: 999,
-    transform: [{ rotate: '-35deg' }],
-  },
-  shadowHighlight: {
-    position: 'absolute',
-    bottom: '8%',
-    right: '8%',
-    width: '40%',
-    height: '40%',
-    backgroundColor: 'rgba(0, 0, 0, 0.15)',
-    borderRadius: 999,
+    opacity: 0.9,
   },
 });
 export default Ball;

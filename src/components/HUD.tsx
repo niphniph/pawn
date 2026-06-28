@@ -26,76 +26,55 @@ export const HUD: React.FC<HUDProps> = ({
 }) => {
   return (
     <View style={styles.container}>
-      {/* Top Row: Modes & Best Score */}
-      <View style={styles.topRow}>
-        <View>
-          <Text style={styles.modeLabel}>MODE</Text>
-          <Text style={styles.modeValue}>TIME ATTACK</Text>
-        </View>
-        <View style={styles.bestContainer}>
-          <Text style={styles.bestLabel}>BEST SCORE</Text>
-          <Text style={styles.bestValue}>{bestScore > 0 ? bestScore : '0'}</Text>
-        </View>
-      </View>
-
-      {/* Middle Row: Active Turn Badge */}
-      <View style={styles.turnRow}>
-        <Text style={styles.turnLabel}>ACTIVE TURN</Text>
+      {/* Title & Active Turn Dot */}
+      <View style={styles.leftSection}>
         <View
           style={[
-            styles.turnBadge,
-            activeTurn === 'player' ? styles.playerTurnBadge : styles.computerTurnBadge,
+            styles.turnDot,
+            activeTurn === 'player' ? styles.playerDot : styles.computerDot,
           ]}
-        >
-          <Text
-            style={[
-              styles.turnBadgeText,
-              activeTurn === 'player' ? styles.playerTurnText : styles.computerTurnText,
-            ]}
-          >
-            {activeTurn === 'player' ? 'YOUR TURN' : 'COMPUTER TURN'}
-          </Text>
-        </View>
+        />
+        <Text style={styles.title}>PAWN GAMBIT</Text>
       </View>
 
-      {/* Bottom Row: Stats and Game Actions */}
-      <View style={styles.bottomRow}>
-        {/* Moves Stats */}
+      {/* Compressed Stats Row */}
+      <View style={styles.statsContainer}>
         <View style={styles.statBox}>
           <Text style={styles.statLabel}>MOVES</Text>
           <Text style={styles.statValue}>{moves}</Text>
         </View>
 
-        {/* Timer Countdown */}
         <View style={styles.statBox}>
-          <Text style={styles.statLabel}>TIME LEFT</Text>
+          <Text style={styles.statLabel}>TIME</Text>
           <Text style={[styles.statValue, timeLeft <= 10 && styles.lowTime]}>
             {timeLeft}s
           </Text>
         </View>
 
-        {/* Buttons Controls */}
-        <View style={styles.controls}>
-          {/* Mute Button */}
-          <TouchableOpacity onPress={onToggleMute} style={styles.controlBtn} activeOpacity={0.7}>
-            <Text style={styles.iconText}>{isMuted ? '🔇' : '🔊'}</Text>
-          </TouchableOpacity>
-
-          {/* Undo Button */}
-          <TouchableOpacity
-            onPress={onUndo}
-            disabled={!canUndo}
-            style={[styles.controlBtn, !canUndo && styles.disabledBtn]}
-            activeOpacity={0.7}
-          >
-            <Text style={styles.iconText}>⎌</Text>
-          </TouchableOpacity>
-
-          {/* Reset Button */}
-          <TouchableOpacity onPress={onReset} style={styles.controlBtn} activeOpacity={0.7}>
-            <Text style={styles.iconText}>⟲</Text>
-          </TouchableOpacity>
+        <View style={styles.statBox}>
+          <Text style={styles.statLabel}>BEST</Text>
+          <Text style={styles.bestValue}>{bestScore}</Text>
         </View>
+      </View>
+
+      {/* Small Compact Controls */}
+      <View style={styles.controls}>
+        <TouchableOpacity onPress={onToggleMute} style={styles.controlBtn} activeOpacity={0.7}>
+          <Text style={styles.iconText}>{isMuted ? '🔇' : '🔊'}</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          onPress={onUndo}
+          disabled={!canUndo}
+          style={[styles.controlBtn, !canUndo && styles.disabledBtn]}
+          activeOpacity={0.7}
+        >
+          <Text style={styles.iconText}>⎌</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity onPress={onReset} style={styles.controlBtn} activeOpacity={0.7}>
+          <Text style={styles.iconText}>⟲</Text>
+        </TouchableOpacity>
       </View>
     </View>
   );
@@ -104,151 +83,101 @@ export const HUD: React.FC<HUDProps> = ({
 const styles = StyleSheet.create({
   container: {
     width: '100%',
-    backgroundColor: 'rgba(31, 21, 58, 0.8)',
-    borderRadius: 20,
-    borderWidth: 2,
-    borderColor: '#3a1d74',
-    padding: 14,
-    marginBottom: 10,
+    height: 52,
+    backgroundColor: 'rgba(25, 12, 52, 0.95)',
+    borderRadius: 14,
+    borderWidth: 1.5,
+    borderColor: '#30185c',
+    paddingHorizontal: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginTop: 10,
     shadowColor: '#000000',
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
+    shadowOpacity: 0.4,
     shadowRadius: 5,
-    elevation: 5,
+    elevation: 6,
   },
-  topRow: {
+  leftSection: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
-    borderBottomWidth: 1,
-    borderBottomColor: 'rgba(58, 29, 116, 0.4)',
-    paddingBottom: 6,
-    marginBottom: 6,
+    gap: 8,
   },
-  modeLabel: {
-    color: '#8b5cf6',
-    fontSize: 9,
-    fontWeight: '900',
-    letterSpacing: 1.5,
+  turnDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    borderWidth: 1,
+    borderColor: '#ffffff',
   },
-  modeValue: {
-    color: '#ffffff',
-    fontSize: 16,
-    fontWeight: '900',
+  playerDot: {
+    backgroundColor: '#00ccff',
+    shadowColor: '#00ccff',
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.9,
+    shadowRadius: 4,
   },
-  bestContainer: {
-    alignItems: 'flex-end',
+  computerDot: {
+    backgroundColor: '#ff00cc',
+    shadowColor: '#ff00cc',
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.9,
+    shadowRadius: 4,
   },
-  bestLabel: {
-    color: '#fbbf24',
-    fontSize: 8,
+  title: {
+    color: '#a855f7',
+    fontSize: 12,
     fontWeight: '900',
     letterSpacing: 1,
   },
-  bestValue: {
-    color: '#ffffff',
-    fontSize: 16,
-    fontWeight: '900',
-    textShadowColor: 'rgba(251, 191, 36, 0.4)',
-    textShadowOffset: { width: 0, height: 0 },
-    textShadowRadius: 4,
-  },
-  turnRow: {
+  statsContainer: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
-    paddingBottom: 6,
-    marginBottom: 6,
-    borderBottomWidth: 1,
-    borderBottomColor: 'rgba(58, 29, 116, 0.4)',
-  },
-  turnLabel: {
-    color: '#a37ee6',
-    fontSize: 9,
-    fontWeight: '900',
-    letterSpacing: 1.5,
-  },
-  turnBadge: {
-    paddingHorizontal: 12,
-    paddingVertical: 4,
-    borderRadius: 10,
-    borderWidth: 1.5,
-  },
-  playerTurnBadge: {
-    backgroundColor: 'rgba(0, 204, 255, 0.1)',
-    borderColor: '#00ccff',
-  },
-  computerTurnBadge: {
-    backgroundColor: 'rgba(255, 0, 204, 0.1)',
-    borderColor: '#ff00cc',
-  },
-  turnBadgeText: {
-    fontSize: 10,
-    fontWeight: '900',
-    letterSpacing: 1,
-  },
-  playerTurnText: {
-    color: '#00ccff',
-    textShadowColor: 'rgba(0, 204, 255, 0.5)',
-    textShadowOffset: { width: 0, height: 0 },
-    textShadowRadius: 5,
-  },
-  computerTurnText: {
-    color: '#ff00cc',
-    textShadowColor: 'rgba(255, 0, 204, 0.5)',
-    textShadowOffset: { width: 0, height: 0 },
-    textShadowRadius: 5,
-  },
-  bottomRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    gap: 16,
   },
   statBox: {
-    flex: 1,
+    alignItems: 'center',
   },
   statLabel: {
-    color: '#a37ee6',
-    fontSize: 9,
+    color: '#8b5cf6',
+    fontSize: 7,
     fontWeight: '900',
-    letterSpacing: 1,
+    letterSpacing: 0.8,
   },
   statValue: {
     color: '#ffffff',
-    fontSize: 16,
+    fontSize: 12,
+    fontWeight: '800',
+  },
+  bestValue: {
+    color: '#fbbf24',
+    fontSize: 12,
     fontWeight: '800',
   },
   lowTime: {
     color: '#ef4444',
-    textShadowColor: 'rgba(239, 68, 68, 0.6)',
-    textShadowOffset: { width: 0, height: 0 },
-    textShadowRadius: 6,
   },
   controls: {
     flexDirection: 'row',
-    gap: 8,
+    gap: 6,
   },
   controlBtn: {
-    width: 34,
-    height: 34,
-    borderRadius: 10,
-    backgroundColor: '#20123a',
-    borderWidth: 1.5,
-    borderColor: '#3a1d74',
+    width: 28,
+    height: 28,
+    borderRadius: 8,
+    backgroundColor: '#1b0c33',
+    borderWidth: 1,
+    borderColor: '#30185c',
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.3,
-    shadowRadius: 2,
-    elevation: 3,
   },
   disabledBtn: {
-    opacity: 0.4,
+    opacity: 0.35,
   },
   iconText: {
     color: '#ffffff',
-    fontSize: 14,
+    fontSize: 11,
     textAlign: 'center',
   },
 });

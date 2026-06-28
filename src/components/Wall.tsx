@@ -1,5 +1,5 @@
-import React from 'react';
-import { StyleSheet, View } from 'react-native';
+import React, { useEffect, useRef } from 'react';
+import { StyleSheet, View, Animated } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 
 interface WallProps {
@@ -12,73 +12,95 @@ interface WallProps {
 export const Wall: React.FC<WallProps> = ({ x, y, dir, cellSize }) => {
   const isHorizontal = dir === 'h';
   
-  const thickness = 6;
+  const thickness = 10;
   const offset = thickness / 2;
+
+  // Spring pop entry animation on creation
+  const scaleAnim = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    Animated.spring(scaleAnim, {
+      toValue: 1,
+      tension: 100,
+      friction: 5,
+      useNativeDriver: true,
+    }).start();
+  }, []);
 
   const style = isHorizontal
     ? {
-        left: x * cellSize + 1,
+        left: x * cellSize + 2,
         top: y * cellSize - offset,
-        width: cellSize - 2,
+        width: cellSize - 4,
         height: thickness,
         borderRadius: thickness / 2,
       }
     : {
         left: x * cellSize - offset,
-        top: y * cellSize + 1,
+        top: y * cellSize + 2,
         width: thickness,
-        height: cellSize - 2,
+        height: cellSize - 4,
         borderRadius: thickness / 2,
       };
 
   return (
-    <View style={[styles.container, style]} pointerEvents="none">
+    <Animated.View 
+      style={[
+        styles.container, 
+        style, 
+        { transform: [{ scale: scaleAnim }] }
+      ]} 
+      pointerEvents="none"
+    >
       <LinearGradient
-        colors={['#ffe066', '#f59e0b', '#b45309']}
+        colors={['#fff4a3', '#fbbf24', '#d97706']}
         start={isHorizontal ? { x: 0, y: 0 } : { x: 0, y: 0 }}
         end={isHorizontal ? { x: 0, y: 1 } : { x: 1, y: 0 }}
         style={styles.gradient}
       >
-        {/* Specular Highlight for 3D capsule look */}
+        {/* Glossy highlight line running down the center of the capsule */}
         <View style={[styles.highlight, isHorizontal ? styles.horizHighlight : styles.vertHighlight]} />
       </LinearGradient>
-    </View>
+    </Animated.View>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
     position: 'absolute',
-    zIndex: 10,
+    zIndex: 15,
     overflow: 'hidden',
-    shadowColor: '#f59e0b',
+    shadowColor: '#fbbf24',
     shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.9,
-    shadowRadius: 5,
+    shadowOpacity: 0.95,
+    shadowRadius: 6,
     elevation: 4,
-    borderWidth: 0.5,
-    borderColor: '#ffe066',
+    borderWidth: 1,
+    borderColor: '#b45309',
   },
   gradient: {
     flex: 1,
     position: 'relative',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   highlight: {
     position: 'absolute',
-    backgroundColor: 'rgba(255, 255, 255, 0.7)',
+    backgroundColor: '#ffffff',
+    opacity: 0.85,
     borderRadius: 999,
   },
   horizHighlight: {
-    top: 1,
+    top: 2,
     left: 4,
     right: 4,
-    height: 1.5,
+    height: 1.8,
   },
   vertHighlight: {
-    left: 1,
+    left: 2,
     top: 4,
     bottom: 4,
-    width: 1.5,
+    width: 1.8,
   },
 });
 export default Wall;
