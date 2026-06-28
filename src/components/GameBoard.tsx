@@ -26,18 +26,19 @@ export const GameBoard: React.FC<GameBoardProps> = ({
 
   // Dynamic layout calculations
   const screenWidth = Dimensions.get('window').width;
-  const screenHeight = Dimensions.get('window').height;
-  
-  // Maximize board size to fill the screen width on mobile
-  const maxBoardSize = 390;
-  const boardSize = Math.min(screenWidth - 20, maxBoardSize);
 
-  // Math to extract cell sizes:
-  // boardOuter has borderWidth: 10, padding: 6.
-  // boardInner has borderWidth: 2, padding: 4.
-  // Total border + padding reduction = (10*2 + 6*2) + (2*2 + 4*2) = 32 + 12 = 44
-  const innerUsableSize = boardSize - 44;
-  const cellSize = innerUsableSize / gridSize;
+  // Calculate clean integer cell sizes to prevent rounding errors:
+  // We want boardSize <= screenWidth - 20.
+  // boardSize = 9 * cellSize + 44 (including borders/padding).
+  // 9 * cellSize <= screenWidth - 64.
+  const computedCellSize = Math.floor((screenWidth - 64) / gridSize);
+  
+  // Set cell size constraints (minimum 32px, maximum 38px) to keep it well proportioned
+  const cellSize = Math.max(32, Math.min(computedCellSize, 38));
+  
+  const gridContainerSize = gridSize * cellSize;
+  const innerBoardSize = gridContainerSize + 12; // padding 4 + border 2 on each side
+  const outerBoardSize = innerBoardSize + 28;   // padding 6 + border 8 on each side
 
   // Animations
   const shakeAnim = useRef(new Animated.Value(0)).current;
@@ -64,7 +65,7 @@ export const GameBoard: React.FC<GameBoardProps> = ({
     }).start();
   }, [ballPositions.cyan.x, ballPositions.cyan.y, cellSize]);
 
-  // Invalid move shake animation
+  // Shake animation on blocked moves
   useEffect(() => {
     if (shakeTrigger > 0) {
       Animated.sequence([
@@ -77,7 +78,7 @@ export const GameBoard: React.FC<GameBoardProps> = ({
     }
   }, [shakeTrigger]);
 
-  // Touch Swipe coordinates tracking
+  // Swipe Gesture detection
   const touchStartRef = useRef<{ x: number; y: number } | null>(null);
 
   const handleTouchStart = (e: any) => {
@@ -102,10 +103,8 @@ export const GameBoard: React.FC<GameBoardProps> = ({
     }
   };
 
-  const cells = Array.from({ length: gridSize * gridSize }, (_, i) => ({
-    x: i % gridSize,
-    y: Math.floor(i / gridSize),
-  }));
+  const rows = Array.from({ length: gridSize }, (_, y) => y);
+  const cols = Array.from({ length: gridSize }, (_, x) => x);
 
   return (
     <Animated.View
@@ -114,64 +113,69 @@ export const GameBoard: React.FC<GameBoardProps> = ({
       style={[
         styles.boardOuter,
         {
-          width: boardSize,
-          height: boardSize,
+          width: outerBoardSize,
+          height: outerBoardSize,
           transform: [{ translateX: shakeAnim }],
         },
       ]}
     >
-      <View style={styles.boardInner}>
-        {/* Grid Cells */}
-        <View style={styles.grid}>
-          {cells.map((cell) => {
-            const isPinkCell = ballPositions.pink.x === cell.x && ballPositions.pink.y === cell.y;
-            const isCyanCell = ballPositions.cyan.x === cell.x && ballPositions.cyan.y === cell.y;
-            
+      <View style={[styles.boardInner, { width: innerBoardSize, height: innerBoardSize }]}>
+        {/* Padding-free aligner container */}
+        <View style={[styles.gridContainer, { width: gridContainerSize, height: gridContainerSize }]}>
+          {/* Explicit Row-by-Row Cell Grid to prevent any wrapping bugs */}
+          {rows.map((y) => (
+            <View key={y} style={styles.row}>
+              {cols.map((x) => {
+                const isPinkCell = ballPositions.pink.x === x && ballPositions.pink.y === y;
+                const isCyanCell = ballPositions.cyan.x === x && ballPositions.cyan.y === y;
+                
+                return (
+                  <Cell
+                    key={`${x}-${y}`}
+                    x={x}
+                    y={y}
+                    isSelected={!!(isPinkCell || isCyanCell)}
+                    onPress={() => onCellPress(x, y)}
+                    cellSize={cellSize}
+                    gridSize={gridSize}
+                  />
+                );
+              })}
+            </View>
+          ))}
+
+          {/* Walls overlay inside gridContainer bounds */}
+          {walls.map((wall, idx) => {
+            const isHorizontal = wall.to.y !== wall.from.y;
+            const dir = isHorizontal ? 'h' : 'v';
+            const x = isHorizontal ? wall.from.x : Math.max(wall.from.x, wall.to.x);
+            const y = isHorizontal ? Math.max(wall.from.y, wall.to.y) : wall.from.y;
+
             return (
-              <Cell
-                key={`${cell.x}-${cell.y}`}
-                x={cell.x}
-                y={cell.y}
-                isSelected={!!(isPinkCell || isCyanCell)}
-                onPress={() => onCellPress(cell.x, cell.y)}
+              <Wall
+                key={idx}
+                x={x}
+                y={y}
+                dir={dir}
                 cellSize={cellSize}
-                gridSize={gridSize}
               />
             );
           })}
+
+          {/* Balls overlay inside gridContainer bounds */}
+          <Ball
+            color="pink"
+            isSelected={activeTurn === 'computer'}
+            cellSize={cellSize}
+            positionAnim={pinkPosAnim}
+          />
+          <Ball
+            color="cyan"
+            isSelected={activeTurn === 'player'}
+            cellSize={cellSize}
+            positionAnim={cyanPosAnim}
+          />
         </View>
-
-        {/* Walls */}
-        {walls.map((wall, idx) => {
-          const isHorizontal = wall.to.y !== wall.from.y;
-          const dir = isHorizontal ? 'h' : 'v';
-          const x = isHorizontal ? wall.from.x : Math.max(wall.from.x, wall.to.x);
-          const y = isHorizontal ? Math.max(wall.from.y, wall.to.y) : wall.from.y;
-
-          return (
-            <Wall
-              key={idx}
-              x={x}
-              y={y}
-              dir={dir}
-              cellSize={cellSize}
-            />
-          );
-        })}
-
-        {/* Balls Overlay */}
-        <Ball
-          color="pink"
-          isSelected={activeTurn === 'computer'}
-          cellSize={cellSize}
-          positionAnim={pinkPosAnim}
-        />
-        <Ball
-          color="cyan"
-          isSelected={activeTurn === 'player'}
-          cellSize={cellSize}
-          positionAnim={cyanPosAnim}
-        />
       </View>
     </Animated.View>
   );
@@ -179,10 +183,10 @@ export const GameBoard: React.FC<GameBoardProps> = ({
 
 const styles = StyleSheet.create({
   boardOuter: {
-    backgroundColor: '#4d1ab3', // Saturated purple frame
-    borderWidth: 10,
-    borderColor: '#6024db', // Glowing purple border outline
-    borderRadius: 32, // Large rounded outer corners
+    backgroundColor: '#4d1ab3', // Vibrant purple frame
+    borderWidth: 8,
+    borderColor: '#6024db', // Outline purple border
+    borderRadius: 28,
     padding: 6,
     shadowColor: '#100326',
     shadowOffset: { width: 0, height: 10 },
@@ -193,22 +197,21 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   boardInner: {
-    flex: 1,
-    width: '100%',
-    height: '100%',
     backgroundColor: '#0c051a', // Deep dark board background
-    borderRadius: 20, // Rounded inner corners
+    borderRadius: 18,
     borderWidth: 2,
     borderColor: '#30145c',
-    position: 'relative',
-    overflow: 'hidden',
+    justifyContent: 'center',
+    alignItems: 'center',
     padding: 4,
   },
-  grid: {
-    flex: 1,
-    flexWrap: 'wrap',
+  gridContainer: {
+    position: 'relative',
+    overflow: 'hidden',
+  },
+  row: {
     flexDirection: 'row',
-    alignContent: 'flex-start',
+    alignItems: 'center',
   },
 });
 export default GameBoard;
