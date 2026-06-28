@@ -2,6 +2,7 @@
   "name": "pawn-gambit",
   "main": "expo-router/entry",
   "version": "1.0.0",
+  "homepage": "/pawn/",
   "dependencies": {
     "@expo/ui": "~56.0.18",
     "@react-native-async-storage/async-storage": "2.2.0",
