@@ -1,0 +1,118 @@
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply bg-gaming-dark text-white font-['Outfit',sans-serif] antialiased overflow-x-hidden;
+  }
+}
+
+/* Custom Glossy 3D styling based on the game screenshot */
+
+.dark-tile {
+  background: radial-gradient(circle at center, #251c47 0%, #171030 100%);
+  border: 2px solid #2d2055;
+  box-shadow: inset 0 3px 6px rgba(0, 0, 0, 0.4);
+}
+
+.glossy-blue {
+  background: linear-gradient(to bottom, #38bdf8 0%, #0284c7 100%);
+  border: 1px solid #7dd3fc;
+  box-shadow: 
+    inset 0 4px 6px rgba(255, 255, 255, 0.7),
+    inset 0 -4px 6px rgba(0, 0, 0, 0.35),
+    0 4px 10px rgba(2, 132, 199, 0.4);
+  position: relative;
+}
+.glossy-blue::after {
+  content: '';
+  position: absolute;
+  top: 3px;
+  left: 6px;
+  right: 6px;
+  height: 30%;
+  background: linear-gradient(to bottom, rgba(255, 255, 255, 0.8), rgba(255, 255, 255, 0.05));
+  border-radius: 9999px;
+  pointer-events: none;
+}
+
+.glossy-pink {
+  background: linear-gradient(to bottom, #f472b6 0%, #be185d 100%);
+  border: 1px solid #fbcfe8;
+  box-shadow: 
+    inset 0 4px 6px rgba(255, 255, 255, 0.7),
+    inset 0 -4px 6px rgba(0, 0, 0, 0.35),
+    0 4px 10px rgba(190, 24, 93, 0.4);
+  position: relative;
+}
+.glossy-pink::after {
+  content: '';
+  position: absolute;
+  top: 3px;
+  left: 6px;
+  right: 6px;
+  height: 30%;
+  background: linear-gradient(to bottom, rgba(255, 255, 255, 0.8), rgba(255, 255, 255, 0.05));
+  border-radius: 9999px;
+  pointer-events: none;
+}
+
+.glossy-gold {
+  background: linear-gradient(to bottom, #fbbf24 0%, #b45309 100%);
+  border: 1px solid #fde047;
+  box-shadow: 
+    inset 0 3px 5px rgba(255, 255, 255, 0.8),
+    inset 0 -3px 5px rgba(0, 0, 0, 0.35),
+    0 4px 8px rgba(180, 83, 9, 0.35);
+  position: relative;
+}
+.glossy-gold::after {
+  content: '';
+  position: absolute;
+  top: 2px;
+  left: 4px;
+  right: 4px;
+  height: 25%;
+  background: linear-gradient(to bottom, rgba(255, 255, 255, 0.75), rgba(255, 255, 255, 0.05));
+  border-radius: 9999px;
+  pointer-events: none;
+}
+
+.glossy-purple {
+  background: linear-gradient(to bottom, #6d28d9 0%, #4c1d95 100%);
+  border: 2px solid #8b5cf6;
+  box-shadow: 
+    inset 0 4px 8px rgba(255, 255, 255, 0.4),
+    inset 0 -4px 8px rgba(0, 0, 0, 0.5),
+    0 8px 16px rgba(76, 29, 149, 0.4);
+  position: relative;
+}
+.glossy-purple::after {
+  content: '';
+  position: absolute;
+  top: 4px;
+  left: 8px;
+  right: 8px;
+  height: 20%;
+  background: linear-gradient(to bottom, rgba(255, 255, 255, 0.3), rgba(255, 255, 255, 0.02));
+  border-radius: 9999px;
+  pointer-events: none;
+}
+
+/* Custom scrollbars */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  @apply bg-gaming-darker;
+}
+::-webkit-scrollbar-thumb {
+  @apply bg-gaming-tileBorder rounded-full;
+}
+::-webkit-scrollbar-thumb:hover {
+  @apply bg-gaming-purpleLight;
+}

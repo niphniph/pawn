@@ -1,0 +1,6 @@
+# HTTrack Website Copier Cookie File
+# This file format is compatible with Netscape cookies
+www.wallz.gg	TRUE	/	FALSE	1999999999	__Host-authjs.csrf-token	bf4c0898c519c204c702da3d96ef1c5bbc89cd7589ba46046f1775633130a842%7C01131e99470cb72ec5eb6d8ebe06bd15ec03220bf91d627b01bbd52523a1a7a1
+www.wallz.gg	TRUE	/	FALSE	1999999999	__Secure-authjs.callback-url	https%3A%2F%2Fwww.wallz.gg
+www.wallz.gg	TRUE	/	FALSE	1999999999	SameSite	Lax
+

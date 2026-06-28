@@ -1,56 +1,79 @@
-# Welcome to your Expo app 👋
+# Pawn Gambit - Neon Grid Puzzle Mobile App
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+A high-fidelity React Native Expo mobile app inspired by the puzzle coordination mechanics of Wallz.gg. 
 
-## Get started
+## Features
+- **9x9 Neon Grid Board**: Recreating the cartoon arcade neon aesthetic with high-fidelity gradients and glowing barriers.
+- **Two-Ball Coordination**: Control both the Pink and Cyan balls. Get the Cyan ball to the Cyan top row and the Pink ball to the Pink bottom row.
+- **10 Handcrafted Levels**: Increasing difficulty, starting with the layout from the reference image.
+- **Blocked Movement Shake**: Board shakes physically when an illegal move or barrier collision is made.
+- **Spring Movement Animation**: Smooth sliding animations with spring bounce on successful moves.
+- **Time Attack Mode**: A 60-second countdown starting after clicking the Start button.
+- **Undo / Reset**: Quick controls to revert moves or restart a level.
+- **High Scores**: Saved locally using `@react-native-async-storage/async-storage`.
 
-1. Install dependencies
+---
 
-   ```bash
-   npm install
-   ```
+## How to Play
+1. **Select a Ball**: Tap either the Pink or Cyan ball.
+2. **Move**:
+   - Tap an adjacent cell to step in that direction.
+   - Swipe anywhere on the board to move the selected ball.
+3. **Win Condition**: Place both balls in their target zones (Cyan on top row, Pink on bottom row).
 
-2. Start the app
+---
 
-   ```bash
-   npx expo start
-   ```
+## Running Locally
 
-In the output, you'll find options to open the app in a
-
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
-
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
-
-## Get a fresh project
-
-When you're ready, run:
-
+### 1. Install Dependencies
 ```bash
-npm run reset-project
+npm install
 ```
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+### 2. Start the Expo Dev Server
+```bash
+npx expo start
+```
+- Scan the QR code with the **Expo Go** app on iOS/Android to run the app.
+- Press `a` to run on an Android emulator or `i` to run on an iOS simulator.
 
-### Other setup steps
+---
 
-- To set up ESLint for linting, run `npx expo lint`, or follow our guide on ["Using ESLint and Prettier"](https://docs.expo.dev/guides/using-eslint/)
-- If you'd like to set up unit testing, follow our guide on ["Unit Testing with Jest"](https://docs.expo.dev/develop/unit-testing/)
-- Learn more about the TypeScript setup in this template in our guide on ["Using TypeScript"](https://docs.expo.dev/guides/typescript/)
+## Production Builds with EAS
 
-## Learn more
+This project is ready to be built using [Expo Application Services (EAS)](https://docs.expo.dev/build/introduction/).
 
-To learn more about developing your project with Expo, look at the following resources:
+### Prerequisites
+1. Install EAS CLI globally:
+   ```bash
+   npm install -g eas-cli
+   ```
+2. Log in to your Expo account:
+   ```bash
+   eas login
+   ```
+3. Configure the project:
+   ```bash
+   eas build:configure
+   ```
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+### Android Build (APK / AAB)
+- **To build a standard AAB for Google Play**:
+  ```bash
+  eas build --platform android
+  ```
+- **To build a test APK for direct installation**:
+  Update your `eas.json` build profile to include `"developmentClient": false` and `"distribution": "internal"`, or run:
+  ```bash
+  eas build --platform android --profile preview
+  ```
 
-## Join the community
-
-Join our community of developers creating universal apps.
-
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+### iOS Build
+- **To build for App Store submit**:
+  ```bash
+  eas build --platform ios
+  ```
+- **To build for Ad Hoc / Simulator testing**:
+  ```bash
+  eas build --platform ios --profile preview
+  ```

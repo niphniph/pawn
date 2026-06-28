@@ -1,11 +1,11 @@
 {
   "expo": {
-    "name": "tmp-app",
-    "slug": "tmp-app",
+    "name": "Pawn Gambit",
+    "slug": "pawn-gambit",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
-    "scheme": "tmpapp",
+    "scheme": "pawngambit",
     "userInterfaceStyle": "automatic",
     "ios": {
       "icon": "./assets/expo.icon"
