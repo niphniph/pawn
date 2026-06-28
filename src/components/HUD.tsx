@@ -2,10 +2,7 @@ import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 
 interface HUDProps {
-  levelNumber: number;
-  levelName: string;
   moves: number;
-  par: number;
   timeLeft: number;
   bestScore: number;
   isMuted: boolean;
@@ -13,16 +10,11 @@ interface HUDProps {
   onUndo: () => void;
   canUndo: boolean;
   onReset: () => void;
-  isTimeAttack: boolean;
-  onToggleTimeAttack: () => void;
   activeTurn: 'player' | 'computer';
 }
 
 export const HUD: React.FC<HUDProps> = ({
-  levelNumber,
-  levelName,
   moves,
-  par,
   timeLeft,
   bestScore,
   isMuted,
@@ -30,27 +22,23 @@ export const HUD: React.FC<HUDProps> = ({
   onUndo,
   canUndo,
   onReset,
-  isTimeAttack,
-  onToggleTimeAttack,
   activeTurn,
 }) => {
   return (
     <View style={styles.container}>
-      {/* Top Section: Title & Best Score */}
+      {/* Top Row: Modes & Best Score */}
       <View style={styles.topRow}>
         <View>
-          <Text style={styles.levelLabel}>LEVEL {levelNumber}</Text>
-          <Text style={styles.levelName} numberOfLines={1}>
-            {levelName}
-          </Text>
+          <Text style={styles.modeLabel}>MODE</Text>
+          <Text style={styles.modeValue}>TIME ATTACK</Text>
         </View>
         <View style={styles.bestContainer}>
           <Text style={styles.bestLabel}>BEST SCORE</Text>
-          <Text style={styles.bestValue}>{bestScore > 0 ? bestScore : '---'}</Text>
+          <Text style={styles.bestValue}>{bestScore > 0 ? bestScore : '0'}</Text>
         </View>
       </View>
 
-      {/* Middle Section: Turn Indicator */}
+      {/* Middle Row: Active Turn Badge */}
       <View style={styles.turnRow}>
         <Text style={styles.turnLabel}>ACTIVE TURN</Text>
         <View
@@ -70,52 +58,41 @@ export const HUD: React.FC<HUDProps> = ({
         </View>
       </View>
 
-      {/* Bottom Section: Stats & Controls */}
+      {/* Bottom Row: Stats and Game Actions */}
       <View style={styles.bottomRow}>
-        {/* Moves */}
+        {/* Moves Stats */}
         <View style={styles.statBox}>
           <Text style={styles.statLabel}>MOVES</Text>
-          <Text style={styles.statValue}>
-            {moves} <Text style={styles.statSub}>/ Par {par}</Text>
+          <Text style={styles.statValue}>{moves}</Text>
+        </View>
+
+        {/* Timer Countdown */}
+        <View style={styles.statBox}>
+          <Text style={styles.statLabel}>TIME LEFT</Text>
+          <Text style={[styles.statValue, timeLeft <= 10 && styles.lowTime]}>
+            {timeLeft}s
           </Text>
         </View>
 
-        {/* Timer (Time Attack button) */}
-        <TouchableOpacity
-          onPress={onToggleTimeAttack}
-          style={styles.statBox}
-          activeOpacity={0.7}
-        >
-          <Text style={styles.statLabel}>
-            {isTimeAttack ? 'TIME LEFT (ON)' : 'TIME ATTACK (OFF)'}
-          </Text>
-          <Text
-            style={[
-              styles.statValue,
-              isTimeAttack && timeLeft <= 10 && styles.lowTime,
-              !isTimeAttack && styles.disabledTime,
-            ]}
-          >
-            {isTimeAttack ? `${timeLeft}s` : 'DISABLED'}
-          </Text>
-        </TouchableOpacity>
-
-        {/* Controls */}
+        {/* Buttons Controls */}
         <View style={styles.controls}>
-          {/* Mute button */}
-          <TouchableOpacity onPress={onToggleMute} style={styles.controlBtn}>
+          {/* Mute Button */}
+          <TouchableOpacity onPress={onToggleMute} style={styles.controlBtn} activeOpacity={0.7}>
             <Text style={styles.iconText}>{isMuted ? '🔇' : '🔊'}</Text>
           </TouchableOpacity>
-          {/* Undo button */}
+
+          {/* Undo Button */}
           <TouchableOpacity
             onPress={onUndo}
             disabled={!canUndo}
             style={[styles.controlBtn, !canUndo && styles.disabledBtn]}
+            activeOpacity={0.7}
           >
             <Text style={styles.iconText}>⎌</Text>
           </TouchableOpacity>
-          {/* Restart button */}
-          <TouchableOpacity onPress={onReset} style={styles.controlBtn}>
+
+          {/* Reset Button */}
+          <TouchableOpacity onPress={onReset} style={styles.controlBtn} activeOpacity={0.7}>
             <Text style={styles.iconText}>⟲</Text>
           </TouchableOpacity>
         </View>
@@ -127,33 +104,37 @@ export const HUD: React.FC<HUDProps> = ({
 const styles = StyleSheet.create({
   container: {
     width: '100%',
-    backgroundColor: 'rgba(31, 21, 58, 0.75)',
+    backgroundColor: 'rgba(31, 21, 58, 0.8)',
     borderRadius: 20,
-    borderWidth: 1.5,
-    borderColor: '#34225d',
+    borderWidth: 2,
+    borderColor: '#3a1d74',
     padding: 14,
-    marginBottom: 12,
+    marginBottom: 10,
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 5,
+    elevation: 5,
   },
   topRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     borderBottomWidth: 1,
-    borderBottomColor: 'rgba(52, 34, 93, 0.2)',
+    borderBottomColor: 'rgba(58, 29, 116, 0.4)',
     paddingBottom: 6,
     marginBottom: 6,
   },
-  levelLabel: {
+  modeLabel: {
     color: '#8b5cf6',
     fontSize: 9,
     fontWeight: '900',
     letterSpacing: 1.5,
   },
-  levelName: {
+  modeValue: {
     color: '#ffffff',
     fontSize: 16,
     fontWeight: '900',
-    maxWidth: 200,
   },
   bestContainer: {
     alignItems: 'flex-end',
@@ -166,8 +147,11 @@ const styles = StyleSheet.create({
   },
   bestValue: {
     color: '#ffffff',
-    fontSize: 15,
+    fontSize: 16,
     fontWeight: '900',
+    textShadowColor: 'rgba(251, 191, 36, 0.4)',
+    textShadowOffset: { width: 0, height: 0 },
+    textShadowRadius: 4,
   },
   turnRow: {
     flexDirection: 'row',
@@ -176,7 +160,7 @@ const styles = StyleSheet.create({
     paddingBottom: 6,
     marginBottom: 6,
     borderBottomWidth: 1,
-    borderBottomColor: 'rgba(52, 34, 93, 0.2)',
+    borderBottomColor: 'rgba(58, 29, 116, 0.4)',
   },
   turnLabel: {
     color: '#a37ee6',
@@ -185,9 +169,9 @@ const styles = StyleSheet.create({
     letterSpacing: 1.5,
   },
   turnBadge: {
-    paddingHorizontal: 10,
-    paddingVertical: 3,
-    borderRadius: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 4,
+    borderRadius: 10,
     borderWidth: 1.5,
   },
   playerTurnBadge: {
@@ -205,9 +189,15 @@ const styles = StyleSheet.create({
   },
   playerTurnText: {
     color: '#00ccff',
+    textShadowColor: 'rgba(0, 204, 255, 0.5)',
+    textShadowOffset: { width: 0, height: 0 },
+    textShadowRadius: 5,
   },
   computerTurnText: {
     color: '#ff00cc',
+    textShadowColor: 'rgba(255, 0, 204, 0.5)',
+    textShadowOffset: { width: 0, height: 0 },
+    textShadowRadius: 5,
   },
   bottomRow: {
     flexDirection: 'row',
@@ -225,33 +215,33 @@ const styles = StyleSheet.create({
   },
   statValue: {
     color: '#ffffff',
-    fontSize: 15,
+    fontSize: 16,
     fontWeight: '800',
-  },
-  statSub: {
-    fontSize: 10,
-    color: '#555577',
-    fontWeight: '600',
   },
   lowTime: {
     color: '#ef4444',
-  },
-  disabledTime: {
-    color: '#555577',
+    textShadowColor: 'rgba(239, 68, 68, 0.6)',
+    textShadowOffset: { width: 0, height: 0 },
+    textShadowRadius: 6,
   },
   controls: {
     flexDirection: 'row',
-    gap: 6,
+    gap: 8,
   },
   controlBtn: {
-    width: 32,
-    height: 32,
-    borderRadius: 8,
-    backgroundColor: '#1f153a',
-    borderWidth: 1,
-    borderColor: '#34225d',
+    width: 34,
+    height: 34,
+    borderRadius: 10,
+    backgroundColor: '#20123a',
+    borderWidth: 1.5,
+    borderColor: '#3a1d74',
     alignItems: 'center',
     justifyContent: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 2,
+    elevation: 3,
   },
   disabledBtn: {
     opacity: 0.4,

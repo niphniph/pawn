@@ -1,77 +1,75 @@
 import React, { useEffect, useRef } from 'react';
 import { StyleSheet, View, Animated, Dimensions } from 'react-native';
 import Cell from './Cell';
-import Barrier from './Barrier';
+import Wall from './Wall';
 import Ball from './Ball';
-import { Level, BallPositions, Wall } from '../types/game';
+import { BallPositions, Wall as WallType } from '../types/game';
 
 interface GameBoardProps {
-  level: Level;
-  walls: Wall[];
+  walls: WallType[];
   ballPositions: BallPositions;
-  selectedBall: 'pink' | 'cyan' | null;
+  activeTurn: 'player' | 'computer';
   onCellPress: (x: number, y: number) => void;
   onMove: (dir: 'up' | 'down' | 'left' | 'right') => void;
   shakeTrigger: number;
 }
 
 export const GameBoard: React.FC<GameBoardProps> = ({
-  level,
   walls,
   ballPositions,
-  selectedBall,
+  activeTurn,
   onCellPress,
   onMove,
   shakeTrigger,
 }) => {
-  const gridSize = level.gridSize || 9;
+  const gridSize = 9;
 
-  // Screen size math
+  // Screen size dynamic math to scale perfectly on all mobile phones
   const screenWidth = Dimensions.get('window').width;
   const boardPadding = 12;
-  const maxBoardSize = 360;
+  const maxBoardSize = 370;
   const boardSize = Math.min(screenWidth - 32, maxBoardSize);
   const cellSize = (boardSize - boardPadding * 2) / gridSize;
 
-  // Animations
+  // Animation values
   const shakeAnim = useRef(new Animated.Value(0)).current;
-  const pinkPosAnim = useRef(new Animated.ValueXY({ x: 0, y: 0 })).current;
-  const cyanPosAnim = useRef(new Animated.ValueXY({ x: 0, y: 0 })).current;
+  const pinkPosAnim = useRef(new Animated.ValueXY({ x: 4 * cellSize, y: 8 * cellSize })).current;
+  const cyanPosAnim = useRef(new Animated.ValueXY({ x: 4 * cellSize, y: 0 * cellSize })).current;
 
-  // Sync pink ball position with animation
+  // Sync pink computer ball position with spring animation
   useEffect(() => {
     Animated.spring(pinkPosAnim, {
       toValue: { x: ballPositions.pink.x * cellSize, y: ballPositions.pink.y * cellSize },
       useNativeDriver: true,
-      damping: 12,
-      stiffness: 100,
+      damping: 14,
+      stiffness: 110,
     }).start();
   }, [ballPositions.pink.x, ballPositions.pink.y, cellSize]);
 
-  // Sync cyan ball position with animation
+  // Sync cyan player ball position with spring animation
   useEffect(() => {
     Animated.spring(cyanPosAnim, {
       toValue: { x: ballPositions.cyan.x * cellSize, y: ballPositions.cyan.y * cellSize },
       useNativeDriver: true,
-      damping: 12,
-      stiffness: 100,
+      damping: 14,
+      stiffness: 110,
     }).start();
   }, [ballPositions.cyan.x, ballPositions.cyan.y, cellSize]);
 
-  // Trigger shake animation
+  // Trigger shake animation for invalid moves
   useEffect(() => {
     if (shakeTrigger > 0) {
       Animated.sequence([
-        Animated.timing(shakeAnim, { toValue: 8, duration: 40, useNativeDriver: true }),
-        Animated.timing(shakeAnim, { toValue: -8, duration: 40, useNativeDriver: true }),
-        Animated.timing(shakeAnim, { toValue: 5, duration: 40, useNativeDriver: true }),
-        Animated.timing(shakeAnim, { toValue: -5, duration: 40, useNativeDriver: true }),
-        Animated.timing(shakeAnim, { toValue: 0, duration: 40, useNativeDriver: true }),
+        Animated.timing(shakeAnim, { toValue: 8, duration: 45, useNativeDriver: true }),
+        Animated.timing(shakeAnim, { toValue: -8, duration: 45, useNativeDriver: true }),
+        Animated.timing(shakeAnim, { toValue: 5, duration: 45, useNativeDriver: true }),
+        Animated.timing(shakeAnim, { toValue: -5, duration: 45, useNativeDriver: true }),
+        Animated.timing(shakeAnim, { toValue: 0, duration: 45, useNativeDriver: true }),
       ]).start();
     }
   }, [shakeTrigger]);
 
-  // Direct touch tracking to avoid capturing Cell clicks
+  // Swipe Gesture detection
   const touchStartRef = useRef<{ x: number; y: number } | null>(null);
 
   const handleTouchStart = (e: any) => {
@@ -86,19 +84,19 @@ export const GameBoard: React.FC<GameBoardProps> = ({
     const dy = touch.pageY - touchStartRef.current.y;
     touchStartRef.current = null;
 
-    const threshold = 30; // Minimum distance in pixels to count as a swipe
+    const threshold = 35; // Swiping threshold distance in pixels
     if (Math.abs(dx) > threshold || Math.abs(dy) > threshold) {
       if (Math.abs(dx) > Math.abs(dy)) {
-        // Horizontal swipe
+        // Horizontal Swiping
         onMove(dx > 0 ? 'right' : 'left');
       } else {
-        // Vertical swipe
+        // Vertical Swiping
         onMove(dy > 0 ? 'down' : 'up');
       }
     }
   };
 
-  // Cells array (gridSize x gridSize)
+  // Generate 9x9 cells
   const cells = Array.from({ length: gridSize * gridSize }, (_, i) => ({
     x: i % gridSize,
     y: Math.floor(i / gridSize),
@@ -121,15 +119,15 @@ export const GameBoard: React.FC<GameBoardProps> = ({
         {/* Cells Grid */}
         <View style={styles.grid}>
           {cells.map((cell) => {
-            const isPinkSelected = selectedBall === 'pink' && ballPositions.pink.x === cell.x && ballPositions.pink.y === cell.y;
-            const isCyanSelected = selectedBall === 'cyan' && ballPositions.cyan.x === cell.x && ballPositions.cyan.y === cell.y;
+            const isPinkCell = ballPositions.pink.x === cell.x && ballPositions.pink.y === cell.y;
+            const isCyanCell = ballPositions.cyan.x === cell.x && ballPositions.cyan.y === cell.y;
             
             return (
               <Cell
                 key={`${cell.x}-${cell.y}`}
                 x={cell.x}
                 y={cell.y}
-                isSelected={!!(isPinkSelected || isCyanSelected)}
+                isSelected={!!(isPinkCell || isCyanCell)}
                 onPress={() => onCellPress(cell.x, cell.y)}
                 cellSize={cellSize}
                 gridSize={gridSize}
@@ -138,7 +136,7 @@ export const GameBoard: React.FC<GameBoardProps> = ({
           })}
         </View>
 
-        {/* Barriers (Mapped from Wall Edges) */}
+        {/* Walls Overlay */}
         {walls.map((wall, idx) => {
           const isHorizontal = wall.to.y !== wall.from.y;
           const dir = isHorizontal ? 'h' : 'v';
@@ -146,12 +144,11 @@ export const GameBoard: React.FC<GameBoardProps> = ({
           const y = isHorizontal ? Math.max(wall.from.y, wall.to.y) : wall.from.y;
 
           return (
-            <Barrier
+            <Wall
               key={idx}
               x={x}
               y={y}
               dir={dir}
-              length={1}
               cellSize={cellSize}
             />
           );
@@ -160,13 +157,13 @@ export const GameBoard: React.FC<GameBoardProps> = ({
         {/* Balls Overlay */}
         <Ball
           color="pink"
-          isSelected={selectedBall === 'pink'}
+          isSelected={activeTurn === 'computer'}
           cellSize={cellSize}
           positionAnim={pinkPosAnim}
         />
         <Ball
           color="cyan"
-          isSelected={selectedBall === 'cyan'}
+          isSelected={activeTurn === 'player'}
           cellSize={cellSize}
           positionAnim={cyanPosAnim}
         />
@@ -179,14 +176,14 @@ const styles = StyleSheet.create({
   boardOuter: {
     backgroundColor: '#3a1d74',
     borderWidth: 8,
-    borderColor: '#581ca6',
+    borderColor: '#4d2496',
     borderRadius: 24,
     padding: 10,
-    shadowColor: '#000000',
+    shadowColor: '#1a083a',
     shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: 0.5,
+    shadowOpacity: 0.6,
     shadowRadius: 15,
-    elevation: 10,
+    elevation: 12,
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -194,10 +191,10 @@ const styles = StyleSheet.create({
     flex: 1,
     width: '100%',
     height: '100%',
-    backgroundColor: '#090416',
+    backgroundColor: '#0c051a',
     borderRadius: 12,
     borderWidth: 1.5,
-    borderColor: '#34225d',
+    borderColor: '#30185c',
     position: 'relative',
     overflow: 'hidden',
   },

@@ -1,15 +1,5 @@
 import { Position, Wall } from '../types/game';
-
-/**
- * Checks if a wall exists between two adjacent cells.
- */
-export const hasWallBetween = (from: Position, to: Position, walls: Wall[]): boolean => {
-  return walls.some(
-    w =>
-      (w.from.x === from.x && w.from.y === from.y && w.to.x === to.x && w.to.y === to.y) ||
-      (w.from.x === to.x && w.from.y === to.y && w.to.x === from.x && w.to.y === from.y)
-  );
-};
+import { hasWallBetween } from './wallLogic';
 
 /**
  * Finds all valid adjacent moves from a position, checking boundaries, other ball, and walls.
@@ -55,44 +45,15 @@ export const getValidMoves = (
 };
 
 /**
- * Strategic AI move picker for the computer opponent (pink ball).
- * Aims to reach row 0 (top row target area).
+ * Checks if the cyan player has reached the bottom target row.
  */
-export const getBestComputerMove = (
-  pinkPos: Position,
-  cyanPos: Position,
-  walls: Wall[],
-  gridSize: number = 9
-): Position | null => {
-  const validMoves = getValidMoves(pinkPos, cyanPos, walls, gridSize);
-  if (validMoves.length === 0) return null;
+export const checkPlayerWin = (cyan: Position, gridSize: number = 9): boolean => {
+  return cyan.y === gridSize - 1;
+};
 
-  const scoredMoves = validMoves.map(move => {
-    // If it reaches y === 0, it's a winning move
-    if (move.y === 0) {
-      return { move, score: 10000 };
-    }
-
-    // Simulate placing a wall behind this move
-    const tempWall: Wall = { from: pinkPos, to: move };
-    const simulatedWalls = [...walls, tempWall];
-
-    // Check valid moves from the candidate position
-    const nextMoves = getValidMoves(move, cyanPos, simulatedWalls, gridSize);
-
-    // If nextMoves is empty, this move traps the computer! Avoid.
-    if (nextMoves.length === 0) {
-      return { move, score: -1000 };
-    }
-
-    // Heuristic: prefer smaller y, plus mobility bonus
-    const distanceScore = (gridSize - move.y) * 20;
-    const mobilityScore = nextMoves.length * 2;
-
-    const score = distanceScore + mobilityScore;
-    return { move, score };
-  });
-
-  scoredMoves.sort((a, b) => b.score - a.score);
-  return scoredMoves[0].move;
+/**
+ * Checks if the pink computer opponent has reached the top target row.
+ */
+export const checkComputerWin = (pink: Position): boolean => {
+  return pink.y === 0;
 };

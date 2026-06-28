@@ -1,29 +1,20 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
-import { View, StyleSheet, Text, ScrollView, SafeAreaView } from 'react-native';
+import { View, StyleSheet, Text, SafeAreaView } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 
-import { levels } from '../src/data/levels';
-import { getValidMoves, getBestComputerMove } from '../src/logic/movement';
-import { checkPlayerWin, checkComputerWin } from '../src/logic/winCheck';
+import { getValidMoves, checkPlayerWin, checkComputerWin } from '../src/logic/movement';
+import { getBestComputerMove } from '../src/logic/ai';
 import { calculateScore } from '../src/logic/scoring';
-import {
-  getBestScore,
-  saveBestScore,
-  getUnlockedLevel,
-  saveUnlockedLevel,
-} from '../src/storage/scores';
+import { getBestScore, saveBestScore } from '../src/storage/scores';
 
 import HUD from '../src/components/HUD';
 import GameBoard from '../src/components/GameBoard';
 import GameModal from '../src/components/GameModal';
-import LevelButton from '../src/components/LevelButton';
 import { Position, Wall } from '../src/types/game';
 
 export default function GameScreen() {
   // Game states
-  const [currentLevelId, setCurrentLevelId] = useState<number>(1);
-  const [unlockedLevel, setUnlockedLevel] = useState<number>(1);
-  const [gameState, setGameState] = useState<'start' | 'playing' | 'gameover' | 'won'>('start');
+  const [gameState, setGameState] = useState<'playing' | 'gameover' | 'won'>('playing');
   const [gameOverReason, setGameOverReason] = useState<'time' | 'no_moves' | 'opponent_escaped' | null>(null);
   const [activeTurn, setActiveTurn] = useState<'player' | 'computer'>('player');
   const [timeLeft, setTimeLeft] = useState<number>(60);
@@ -32,27 +23,22 @@ export default function GameScreen() {
   const [isMuted, setIsMuted] = useState<boolean>(false);
   const [shakeTrigger, setShakeTrigger] = useState<number>(0);
   const [undoHistory, setUndoHistory] = useState<{ pink: Position; cyan: Position; walls: Wall[] }[]>([]);
-  const [isTimeAttack, setIsTimeAttack] = useState<boolean>(true);
   
   // Storage stats
   const [bestScore, setBestScore] = useState<number>(0);
   const [currentScore, setCurrentScore] = useState<number>(0);
 
-  // Active level data
-  const activeLevel = useMemo(() => {
-    return levels.find((l) => l.id === currentLevelId) || levels[0];
-  }, [currentLevelId]);
-
-  // Ball positions state
+  // Ball positions starting state
+  // Cyan (player) starts top edge middle column (x: 4, y: 0)
+  // Pink (computer) starts bottom edge middle column (x: 4, y: 8)
   const [ballPositions, setBallPositions] = useState<{ pink: Position; cyan: Position }>({
-    pink: { x: activeLevel.pinkStart.x, y: activeLevel.pinkStart.y },
-    cyan: { x: activeLevel.cyanStart.x, y: activeLevel.cyanStart.y },
+    pink: { x: 4, y: 8 },
+    cyan: { x: 4, y: 0 },
   });
 
-  // Use refs to read latest values in the delayed computer-turn effect
+  // Refs to access the latest state in async/delayed contexts
   const ballPositionsRef = useRef(ballPositions);
   const wallsRef = useRef(walls);
-  const activeLevelRef = useRef(activeLevel);
 
   useEffect(() => {
     ballPositionsRef.current = ballPositions;
@@ -62,50 +48,29 @@ export default function GameScreen() {
     wallsRef.current = walls;
   }, [walls]);
 
+  // Load best score on mount
   useEffect(() => {
-    activeLevelRef.current = activeLevel;
-  }, [activeLevel]);
-
-  // Load unlocked level and best score from AsyncStorage on mount / level change
-  useEffect(() => {
-    const loadProgress = async () => {
-      const unlocked = await getUnlockedLevel();
-      setUnlockedLevel(unlocked);
-      
-      const best = await getBestScore(currentLevelId);
+    const loadScore = async () => {
+      const best = await getBestScore();
       setBestScore(best);
     };
-    
-    loadProgress();
-    
-    // Reset board for the selected level
-    setBallPositions({
-      pink: { ...activeLevel.pinkStart },
-      cyan: { ...activeLevel.cyanStart },
-    });
-    setWalls([]);
-    setUndoHistory([]);
-    setGameMoves(0);
-    setTimeLeft(activeLevel.timeLimit || 60);
-    setGameState('start');
-    setGameOverReason(null);
-    setActiveTurn('player');
-  }, [currentLevelId, activeLevel]);
+    loadScore();
+  }, []);
 
-  // Timer loop for time attack countdown
+  // Timer loop for time attack
   useEffect(() => {
     let timer: any;
-    if (gameState === 'playing' && timeLeft > 0 && isTimeAttack) {
+    if (gameState === 'playing' && timeLeft > 0) {
       timer = setInterval(() => {
         setTimeLeft((prev) => prev - 1);
       }, 1000);
-    } else if (timeLeft === 0 && gameState === 'playing' && isTimeAttack) {
+    } else if (timeLeft === 0 && gameState === 'playing') {
       setGameOverReason('time');
       setGameState('gameover');
     }
     
     return () => clearInterval(timer);
-  }, [gameState, timeLeft, isTimeAttack]);
+  }, [gameState, timeLeft]);
 
   // Keyboard controls listener (Arrow keys and WASD keys)
   useEffect(() => {
@@ -143,52 +108,28 @@ export default function GameScreen() {
   // Game Won handler
   const handleGameWon = () => {
     setGameState('won');
-    const score = calculateScore(timeLeft, gameMoves + 1);
-    setCurrentScore(score);
+    const finalScore = calculateScore(timeLeft, gameMoves);
+    setCurrentScore(finalScore);
     
     const saveStats = async () => {
-      if (score > bestScore) {
-        setBestScore(score);
-        await saveBestScore(currentLevelId, score);
-      }
-      
-      // Unlock next level
-      if (currentLevelId === unlockedLevel && currentLevelId < 10) {
-        const nextLvl = currentLevelId + 1;
-        setUnlockedLevel(nextLvl);
-        await saveUnlockedLevel(nextLvl);
+      if (finalScore > bestScore) {
+        setBestScore(finalScore);
+        await saveBestScore(finalScore);
       }
     };
-    
     saveStats();
   };
 
-  // Primary action button in modal (Start run, retry level, next level)
-  const handlePrimaryModalAction = () => {
-    if (gameState === 'start') {
-      setGameState('playing');
-      setTimeLeft(activeLevel.timeLimit || 60);
-      setActiveTurn('player');
-    } else if (gameState === 'gameover') {
-      handleResetLevel();
-    } else if (gameState === 'won') {
-      if (currentLevelId < 10) {
-        setCurrentLevelId((prev) => prev + 1);
-      } else {
-        handleResetLevel();
-      }
-    }
-  };
-
-  const handleResetLevel = () => {
+  // Full reset for restart/retry actions
+  const handleReset = () => {
     setBallPositions({
-      pink: { ...activeLevel.pinkStart },
-      cyan: { ...activeLevel.cyanStart },
+      pink: { x: 4, y: 8 },
+      cyan: { x: 4, y: 0 },
     });
     setWalls([]);
     setUndoHistory([]);
     setGameMoves(0);
-    setTimeLeft(activeLevel.timeLimit || 60);
+    setTimeLeft(60);
     setGameOverReason(null);
     setActiveTurn('player');
     setGameState('playing');
@@ -205,17 +146,12 @@ export default function GameScreen() {
     setGameMoves((m) => Math.max(0, m - 1));
   };
 
-  const handleToggleTimeAttack = () => {
-    setIsTimeAttack((prev) => !prev);
-  };
-
   // Human player movement execution
   const movePlayer = (target: Position) => {
     const cyanPos = ballPositions.cyan;
     const pinkPos = ballPositions.pink;
-    const gridSz = activeLevel.gridSize || 9;
 
-    // Record undo state (save current configurations)
+    // Record undo state
     setUndoHistory((prev) => [
       ...prev,
       {
@@ -236,14 +172,14 @@ export default function GameScreen() {
     setWalls(updatedWalls);
     setGameMoves((m) => m + 1);
 
-    // Check player win condition (reached bottom row)
-    if (checkPlayerWin(target, gridSz)) {
+    // Check player win condition (reached bottom row, index 8)
+    if (checkPlayerWin(target, 9)) {
       handleGameWon();
       return;
     }
 
     // Check if computer is now trapped (no moves left)
-    const computerValidMoves = getValidMoves(pinkPos, target, updatedWalls, gridSz);
+    const computerValidMoves = getValidMoves(pinkPos, target, updatedWalls, 9);
     if (computerValidMoves.length === 0) {
       handleGameWon();
       return;
@@ -257,10 +193,9 @@ export default function GameScreen() {
   const moveComputer = () => {
     const pinkPos = ballPositionsRef.current.pink;
     const cyanPos = ballPositionsRef.current.cyan;
-    const gridSz = activeLevelRef.current.gridSize || 9;
     const currentWalls = wallsRef.current;
 
-    const bestMove = getBestComputerMove(pinkPos, cyanPos, currentWalls, gridSz);
+    const bestMove = getBestComputerMove(pinkPos, cyanPos, currentWalls, 9);
 
     if (bestMove) {
       const newWall: Wall = { from: { ...pinkPos }, to: { ...bestMove } };
@@ -272,7 +207,7 @@ export default function GameScreen() {
       }));
       setWalls(updatedWalls);
 
-      // Check if computer reached row 0 (top row)
+      // Check if computer reached top row (index 0)
       if (checkComputerWin(bestMove)) {
         setGameOverReason('opponent_escaped');
         setGameState('gameover');
@@ -280,7 +215,7 @@ export default function GameScreen() {
       }
 
       // Check if player is now trapped (no moves left)
-      const playerValidMoves = getValidMoves(cyanPos, bestMove, updatedWalls, gridSz);
+      const playerValidMoves = getValidMoves(cyanPos, bestMove, updatedWalls, 9);
       if (playerValidMoves.length === 0) {
         setGameOverReason('no_moves');
         setGameState('gameover');
@@ -290,33 +225,21 @@ export default function GameScreen() {
       // Return control to player
       setActiveTurn('player');
     } else {
-      // Computer has no moves left - Player wins!
+      // Computer has no moves left - Player wins
       handleGameWon();
     }
   };
 
   const handleCellPress = (x: number, y: number) => {
-    console.log("cell pressed", { x, y });
-    if (gameState !== 'playing' || activeTurn !== 'player') {
-      console.log("move rejected: not player turn or game not playing");
-      return;
-    }
+    if (gameState !== 'playing' || activeTurn !== 'player') return;
 
     const cyanPos = ballPositions.cyan;
-    console.log("player position", cyanPos);
-
-    const gridSz = activeLevel.gridSize || 9;
-    const validMoves = getValidMoves(cyanPos, ballPositions.pink, walls, gridSz);
-    console.log("valid moves", validMoves);
-
-    // Check if the pressed cell is in the valid moves list
+    const validMoves = getValidMoves(cyanPos, ballPositions.pink, walls, 9);
     const isValid = validMoves.some((m) => m.x === x && m.y === y);
 
     if (isValid) {
-      console.log("move accepted");
       movePlayer({ x, y });
     } else {
-      console.log("move rejected");
       setShakeTrigger((prev) => prev + 1);
     }
   };
@@ -333,8 +256,7 @@ export default function GameScreen() {
     if (dir === 'up') nextY -= 1;
     if (dir === 'down') nextY += 1;
 
-    const gridSz = activeLevel.gridSize || 9;
-    const validMoves = getValidMoves(cyanPos, ballPositions.pink, walls, gridSz);
+    const validMoves = getValidMoves(cyanPos, ballPositions.pink, walls, 9);
     const isValid = validMoves.some((m) => m.x === nextX && m.y === nextY);
 
     if (isValid) {
@@ -347,76 +269,46 @@ export default function GameScreen() {
   return (
     <LinearGradient colors={['#090416', '#160b2b']} style={styles.background}>
       <SafeAreaView style={styles.container}>
-        {/* Header */}
+        {/* Header Title */}
         <View style={styles.header}>
           <Text style={styles.title}>PAWN GAMBIT</Text>
-          <Text style={styles.subtitle}>NEON GRID PUZZLE</Text>
+          <Text style={styles.subtitle}>NEON GRID DUEL</Text>
         </View>
 
         {/* HUD Stats */}
         <HUD
-          levelNumber={activeLevel.id}
-          levelName={activeLevel.name}
           moves={gameMoves}
-          par={activeLevel.par}
           timeLeft={timeLeft}
           bestScore={bestScore}
           isMuted={isMuted}
           onToggleMute={() => setIsMuted((prev) => !prev)}
           onUndo={handleUndo}
           canUndo={undoHistory.length > 0 && activeTurn === 'player'}
-          onReset={handleResetLevel}
-          isTimeAttack={isTimeAttack}
-          onToggleTimeAttack={handleToggleTimeAttack}
+          onReset={handleReset}
           activeTurn={activeTurn}
         />
 
         {/* Main Board */}
         <View style={styles.boardWrapper}>
           <GameBoard
-            level={activeLevel}
             walls={walls}
             ballPositions={ballPositions}
-            selectedBall="cyan"
+            activeTurn={activeTurn}
             onCellPress={handleCellPress}
             onMove={handleMove}
             shakeTrigger={shakeTrigger}
           />
         </View>
 
-        {/* Horizontal Level Selection */}
-        <View style={styles.selectorWrapper}>
-          <Text style={styles.selectorTitle}>CHOOSE LEVEL</Text>
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={styles.levelList}
-          >
-            {levels.map((lvl) => (
-              <LevelButton
-                key={lvl.id}
-                id={lvl.id}
-                isActive={currentLevelId === lvl.id}
-                isUnlocked={lvl.id <= unlockedLevel}
-                onPress={() => setCurrentLevelId(lvl.id)}
-              />
-            ))}
-          </ScrollView>
-        </View>
-
-        {/* Modals overlay */}
+        {/* Game State Overlay Modal */}
         <GameModal
           visible={gameState !== 'playing'}
-          status={gameState === 'playing' ? 'start' : gameState}
-          levelName={activeLevel.name}
-          levelNumber={activeLevel.id}
+          status={gameState === 'playing' ? 'gameover' : gameState}
           moves={gameMoves}
-          par={activeLevel.par}
-          timeLeft={activeLevel.timeLimit || 60}
+          timeLeft={timeLeft}
           score={currentScore}
           bestScore={bestScore}
-          onPrimaryAction={handlePrimaryModalAction}
-          onSecondaryAction={gameState === 'won' ? handleResetLevel : undefined}
+          onRestart={handleReset}
           gameOverReason={gameOverReason}
         />
       </SafeAreaView>
@@ -433,6 +325,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     alignItems: 'center',
     justifyContent: 'space-between',
+    paddingBottom: 24,
   },
   header: {
     alignItems: 'center',
@@ -462,20 +355,5 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     marginVertical: 10,
-  },
-  selectorWrapper: {
-    width: '100%',
-    marginVertical: 12,
-  },
-  selectorTitle: {
-    color: '#a37ee6',
-    fontSize: 10,
-    fontWeight: '900',
-    letterSpacing: 1,
-    paddingLeft: 6,
-    marginBottom: 4,
-  },
-  levelList: {
-    paddingHorizontal: 4,
   },
 });

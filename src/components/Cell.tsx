@@ -15,15 +15,17 @@ export const Cell: React.FC<CellProps> = ({ x, y, isSelected, onPress, cellSize,
   const isTopTarget = y === 0;
   const isBottomTarget = y === gridSize - 1;
 
-  let colors: [string, string, ...string[]] = ['#251c47', '#171030'];
-  let borderColor = '#2d2055';
+  let colors: [string, string, ...string[]] = ['#20123a', '#120824'];
+  let borderColor = '#2c1852';
 
   if (isTopTarget) {
-    colors = ['#38bdf8', '#0284c7']; // Blue/Cyan
-    borderColor = '#7dd3fc';
+    // Pink's target row (top)
+    colors = ['#ffaede', '#ff00cc', '#99007a'];
+    borderColor = '#ff66d9';
   } else if (isBottomTarget) {
-    colors = ['#f472b6', '#be185d']; // Pink
-    borderColor = '#fbcfe8';
+    // Cyan's target row (bottom)
+    colors = ['#9de2ff', '#00ccff', '#007a99'];
+    borderColor = '#66d9ff';
   }
 
   return (
@@ -37,18 +39,18 @@ export const Cell: React.FC<CellProps> = ({ x, y, isSelected, onPress, cellSize,
           height: cellSize,
           borderColor: isSelected ? '#ffffff' : borderColor,
           borderWidth: isSelected ? 2 : 1,
-          borderRadius: 6,
-          backgroundColor: '#171030',
+          borderRadius: 8,
+          backgroundColor: '#0c051a',
         },
         isSelected && styles.selectedShadow,
       ]}
     >
       <LinearGradient colors={colors} style={styles.cell}>
-        {/* Glossy Specular Highlight */}
+        {/* Glossy Specular Highlight for Target Cells */}
         {(isTopTarget || isBottomTarget) && (
           <View style={styles.specularHighlight} />
         )}
-        {/* Target Ring Dot (small indicator) */}
+        {/* Small center indicator dot for targets */}
         {(isTopTarget || isBottomTarget) && (
           <View style={styles.dot} />
         )}
@@ -59,7 +61,7 @@ export const Cell: React.FC<CellProps> = ({ x, y, isSelected, onPress, cellSize,
 
 const styles = StyleSheet.create({
   container: {
-    padding: 1,
+    padding: 1.5,
     overflow: 'hidden',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 1 },
@@ -73,32 +75,29 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.8,
     shadowRadius: 4,
     elevation: 4,
-    transform: [{ scale: 0.95 }],
+    transform: [{ scale: 0.96 }],
   },
   cell: {
     flex: 1,
-    borderRadius: 5,
+    borderRadius: 7,
     position: 'relative',
     justifyContent: 'center',
     alignItems: 'center',
   },
   specularHighlight: {
     position: 'absolute',
-    top: 2,
-    left: 4,
-    right: 4,
-    height: '30%',
-    backgroundColor: 'rgba(255, 255, 255, 0.45)',
+    top: 1.5,
+    left: 3,
+    right: 3,
+    height: '25%',
+    backgroundColor: 'rgba(255, 255, 255, 0.4)',
     borderRadius: 999,
   },
   dot: {
-    width: 3,
-    height: 3,
+    width: 4,
+    height: 4,
     borderRadius: 2,
-    backgroundColor: 'rgba(255, 255, 255, 0.45)',
-    position: 'absolute',
-    top: 3,
-    left: 3,
+    backgroundColor: 'rgba(255, 255, 255, 0.3)',
   },
 });
 export default Cell;

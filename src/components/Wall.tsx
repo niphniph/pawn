@@ -2,15 +2,14 @@ import React from 'react';
 import { StyleSheet, View } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 
-interface BarrierProps {
+interface WallProps {
   x: number;
   y: number;
   dir: 'h' | 'v';
-  length: number;
   cellSize: number;
 }
 
-export const Barrier: React.FC<BarrierProps> = ({ x, y, dir, length, cellSize }) => {
+export const Wall: React.FC<WallProps> = ({ x, y, dir, cellSize }) => {
   const isHorizontal = dir === 'h';
   
   const thickness = 6;
@@ -20,7 +19,7 @@ export const Barrier: React.FC<BarrierProps> = ({ x, y, dir, length, cellSize })
     ? {
         left: x * cellSize + 1,
         top: y * cellSize - offset,
-        width: length * cellSize - 2,
+        width: cellSize - 2,
         height: thickness,
         borderRadius: thickness / 2,
       }
@@ -28,14 +27,14 @@ export const Barrier: React.FC<BarrierProps> = ({ x, y, dir, length, cellSize })
         left: x * cellSize - offset,
         top: y * cellSize + 1,
         width: thickness,
-        height: length * cellSize - 2,
+        height: cellSize - 2,
         borderRadius: thickness / 2,
       };
 
   return (
     <View style={[styles.container, style]} pointerEvents="none">
       <LinearGradient
-        colors={['#fde047', '#fbbf24', '#b45309']}
+        colors={['#ffe066', '#f59e0b', '#b45309']}
         start={isHorizontal ? { x: 0, y: 0 } : { x: 0, y: 0 }}
         end={isHorizontal ? { x: 0, y: 1 } : { x: 1, y: 0 }}
         style={styles.gradient}
@@ -52,13 +51,13 @@ const styles = StyleSheet.create({
     position: 'absolute',
     zIndex: 10,
     overflow: 'hidden',
-    shadowColor: '#fbbf24',
+    shadowColor: '#f59e0b',
     shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.8,
-    shadowRadius: 4,
-    elevation: 3,
+    shadowOpacity: 0.9,
+    shadowRadius: 5,
+    elevation: 4,
     borderWidth: 0.5,
-    borderColor: '#fbbf24',
+    borderColor: '#ffe066',
   },
   gradient: {
     flex: 1,
@@ -66,7 +65,7 @@ const styles = StyleSheet.create({
   },
   highlight: {
     position: 'absolute',
-    backgroundColor: 'rgba(255, 255, 255, 0.5)',
+    backgroundColor: 'rgba(255, 255, 255, 0.7)',
     borderRadius: 999,
   },
   horizHighlight: {
@@ -82,4 +81,4 @@ const styles = StyleSheet.create({
     width: 1.5,
   },
 });
-export default Barrier;
+export default Wall;
