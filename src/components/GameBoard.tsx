@@ -1,5 +1,5 @@
 import React, { useEffect, useRef } from 'react';
-import { StyleSheet, View, Animated, Dimensions } from 'react-native';
+import { StyleSheet, View, Animated, Dimensions, PanResponder } from 'react-native';
 import Cell from './Cell';
 import Wall from './Wall';
 import Ball from './Ball';
@@ -78,38 +78,35 @@ export const GameBoard: React.FC<GameBoardProps> = ({
     }
   }, [shakeTrigger]);
 
-  // Swipe Gesture detection
-  const touchStartRef = useRef<{ x: number; y: number } | null>(null);
-
-  const handleTouchStart = (e: any) => {
-    const touch = e.nativeEvent;
-    touchStartRef.current = { x: touch.pageX, y: touch.pageY };
-  };
-
-  const handleTouchEnd = (e: any) => {
-    if (!touchStartRef.current) return;
-    const touch = e.nativeEvent;
-    const dx = touch.pageX - touchStartRef.current.x;
-    const dy = touch.pageY - touchStartRef.current.y;
-    touchStartRef.current = null;
-
-    const threshold = 35;
-    if (Math.abs(dx) > threshold || Math.abs(dy) > threshold) {
-      if (Math.abs(dx) > Math.abs(dy)) {
-        onMove(dx > 0 ? 'right' : 'left');
-      } else {
-        onMove(dy > 0 ? 'down' : 'up');
-      }
-    }
-  };
+  // PanResponder to handle swiping cooperatively with button taps
+  const panResponder = useRef(
+    PanResponder.create({
+      onStartShouldSetPanResponder: () => false,
+      onMoveShouldSetPanResponder: (_, gestureState) => {
+        // Claim responder status only if the user dragged/swiped more than 15 pixels
+        const { dx, dy } = gestureState;
+        return Math.abs(dx) > 15 || Math.abs(dy) > 15;
+      },
+      onPanResponderRelease: (_, gestureState) => {
+        const { dx, dy } = gestureState;
+        const threshold = 30;
+        if (Math.abs(dx) > threshold || Math.abs(dy) > threshold) {
+          if (Math.abs(dx) > Math.abs(dy)) {
+            onMove(dx > 0 ? 'right' : 'left');
+          } else {
+            onMove(dy > 0 ? 'down' : 'up');
+          }
+        }
+      },
+    })
+  ).current;
 
   const rows = Array.from({ length: gridSize }, (_, y) => y);
   const cols = Array.from({ length: gridSize }, (_, x) => x);
 
   return (
     <Animated.View
-      onTouchStart={handleTouchStart}
-      onTouchEnd={handleTouchEnd}
+      {...panResponder.panHandlers}
       style={[
         styles.boardOuter,
         {

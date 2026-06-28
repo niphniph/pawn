@@ -163,6 +163,8 @@ export default function GameScreen() {
     // Build wall edge segment behind player's move
     const newWall: Wall = { from: { ...cyanPos }, to: { ...target } };
     const updatedWalls = [...walls, newWall];
+    console.log("moving...");
+    console.log("wall added", newWall);
 
     setBallPositions((prev) => ({
       ...prev,
@@ -194,6 +196,7 @@ export default function GameScreen() {
     const cyanPos = ballPositionsRef.current.cyan;
     const currentWalls = wallsRef.current;
 
+    console.log("AI turn");
     const bestMove = getBestComputerMove(pinkPos, cyanPos, currentWalls, 9);
 
     if (bestMove) {
@@ -230,15 +233,22 @@ export default function GameScreen() {
   };
 
   const handleCellPress = (x: number, y: number) => {
-    if (gameState !== 'playing' || activeTurn !== 'player') return;
+    console.log("clicked cell", { x, y });
+    if (gameState !== 'playing' || activeTurn !== 'player') {
+      console.log("Click ignored", { gameState, activeTurn });
+      return;
+    }
 
     const cyanPos = ballPositions.cyan;
+    console.log("current position", cyanPos);
     const validMoves = getValidMoves(cyanPos, ballPositions.pink, walls, 9);
+    console.log("valid moves", validMoves);
     const isValid = validMoves.some((m) => m.x === x && m.y === y);
 
     if (isValid) {
       movePlayer({ x, y });
     } else {
+      console.log("Invalid move target", { x, y });
       setShakeTrigger((prev) => prev + 1);
     }
   };
